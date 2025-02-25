@@ -1,0 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Koulen&display=swap');
+
+
+body{
+    all: unset;
+    background-color: #1E1E1E;
+    opacity: 1;
+    background-image: radial-gradient(#6C7A89 1.55px, #1E1E1E 1.55px);
+    background-size: 31px 31px;
+}
+

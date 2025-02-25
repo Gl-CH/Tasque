@@ -1,16 +1,28 @@
 {% extends "layout.html" %}
     
-    {% block title %}
-        Sign In
+    {% block title %}Sign In{% endblock %}
+
+
+    {% block header %}Sign In{% endblock %}
+
+    {% block header.content %} 
+    <div class= "nav-bar-button-container">  
+        <a class="nav-bar-link" href="{% url 'home' %}">Home</a>
+    </div>
     {% endblock %}
 
-
-    {% block header %}
+    {% block container.content %}
         <h1>Sign In</h1>
-    {% endblock %}
-
-
-    {% block content %}
-        <h1>SIGN IN</h1>
-        <h2>this is the sign in page</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.username }}
+            {{ form.password }}
+            <button type="submit">Sign In</button>
+        </form>
+        {% for message in messages %}
+            {{message}}
+        {% endfor %}
+        {{ form.errors }}
+        <a href="{% url 'sign_up' %}">Sign up instead</a>
+ 
     {% endblock %}
