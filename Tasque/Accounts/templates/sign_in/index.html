@@ -19,10 +19,15 @@
             {{ form.password }}
             <button type="submit">Sign In</button>
         </form>
+
         {% for message in messages %}
-            {{message}}
+            <div class="alert-{{ message.tags }}">{{ message }}</div>
         {% endfor %}
-        {{ form.errors }}
+
+        {% for errors in form.non_field_errors %}
+            <p class="error-message">{{ errors }}</p>
+        {% endfor %}
+
         <a href="{% url 'sign_up' %}">Sign up instead</a>
  
     {% endblock %}

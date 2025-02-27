@@ -1,8 +1,12 @@
 {% extends "base.html" %}
 {% load static %}
 
-    {% block content %}
-    <div class= "container">
+
+{% block stylesheet %}<link rel="stylesheet" href="{% static 'accounts/css/styles.css' %}">{% endblock %}
+ 
+
+{% block content %}
+    <div class= "rounded-box">
         {% block container.content %}{% endblock %}
     </div>
-    {% endblock %}
+{% endblock %}

@@ -1,11 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Koulen&display=swap');
 
 
+
 body{
     all: unset;
-    background-color: #1E1E1E;
+    background-color: var(--background-color);
     opacity: 1;
-    background-image: radial-gradient(#6C7A89 1.55px, #1E1E1E 1.55px);
+    background-image: radial-gradient(var(--accent-color) 1.55px, var(--background-color) 1.55px);
     background-size: 31px 31px;
 }
 
+#username{
+    color: whitesmoke ;
+    background-color: var(--accent-color);
+    border-radius: 6px;
+    padding: 2.5px 5px; /* Space around text */
+    margin-right: 10px;
+    margin-left: 10px;
+	display: inline-block;
+    border-style: double;
+}

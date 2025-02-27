@@ -9,9 +9,10 @@
 {% block header.content %}
     
     <div class= "nav-bar-button-container">  
-        <a class = "nav-bar-link" id="username">hello {{request.user}}</a>  
         <a class="nav-bar-link" href="{% url 'sign_out' %}">Sign out</a>
-    
-
+        <a id= "username">hello, {{request.user}}</a>  
     </div>
 {% endblock %}
+
+
+{%block }

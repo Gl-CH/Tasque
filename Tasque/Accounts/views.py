@@ -19,7 +19,7 @@ def sign_in(request):
                 login(request,user)
                 return redirect("tasks")
             else:
-                messages.error(request,"Invalid Login details")
+                form.add_error(None, "Invalid Login Details")
     return render(request,"sign_in/index.html",{'form':form})
 
 def sign_up(request):
