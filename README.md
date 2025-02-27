@@ -3,6 +3,22 @@
 ## Overview
 Tasque is a **Progressive Web App (PWA)** designed for managing tasks efficiently with user authentication and login functionality. It provides a seamless experience across desktop and mobile devices while ensuring data security and user-friendly interactions.
 
+## Screenshots
+
+### Home Page
+![Home Screenshot 1](Screenshots/Home%20-%20Google%20Chrome%202_27_2025%207_57_24%20AM.png)
+![Home Screenshot 2](Screenshots/Home%20-%20Google%20Chrome%202_27_2025%207_57_37%20AM.png)
+![Home Screenshot 3](Screenshots/Home%20-%20Google%20Chrome%202_27_2025%207_57_55%20AM.png)
+
+### Task Management Interface
+![Tasks Screenshot](Screenshots/Tasks%20-%20Google%20Chrome%202_24_2025%208_33_38%20PM.png)
+
+### Sign-In Page
+![Sign In Screenshot](Screenshots/Sign%20In%20-%20Google%20Chrome%202_25_2025%208_55_13%20PM.png)
+
+
+
+
 ## Features
 - ✅ **User Authentication** (Signup, Login, Logout)
 - ✅ **Task Management** (Create, Edit, Delete, Mark as Done)
