@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Lists{% endblock %}
+{% block stylesheet %}<link rel="stylesheet" href="{% static 'tasks/css/styles.css' %}">{% endblock %}
+{% block script %} <script src="{% static 'tasks/js/script.js' %}"></script>{% endblock %}
+{% block meta %}
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta name="list_id" content="{{list_key}}">
+{% endblock %}
+{% block header %}{{ list_name }}{% endblock %}
+
+{% block header.content %}
+    <div class= "nav-bar-button-container">  
+        <a class="nav-bar-link" href="{% url 'sign_out' %}">Sign out</a>
+        <a id= "username">hello, {{request.user}}</a>  
+    </div>
+{% endblock %}
+
+
+{% block content %}
+    <div class="sidebar">
+        <div class = sidebar-button-container>
+            <button><i class="fa-solid fa-file-circle-plus fa-lg"></i></i></button>
+            <button><i class="fa-solid fa-folder-plus fa-lg"></i></button>
+        </div>
+    </div>
+
+
+    <div class = "display-area">
+        <ul id = sections-container>
+            <button class="add-section-button">Add Section</button>
+        </ul>
+
+    </div>
+{% endblock %}

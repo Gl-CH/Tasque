@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Home{% endblock %}
+
+{% block header %}Home{% endblock %}
+
+{% block stylesheet %}<link rel="stylesheet" href="{% static 'home/css/styles.css' %}"><link>{% endblock %}
+
+{% block header.content %} 
+    <div class= "nav-bar-button-container">
+        <a class="nav-bar-link" href="{% url 'sign_in' %}">Sign in</a>
+        <a class="nav-bar-link" href="{% url 'sign_up' %}">Sign up</a>
+    </div>
+{% endblock %}
+
+{% block content%}
+<div class = title>
+    <h1> Welcome To <a id = title-coloured-text>Tasque</a></h1>
+    <h3>A To-do list app</h3>
+</div>
+
+{% endblock %}

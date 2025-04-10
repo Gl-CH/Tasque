@@ -1,0 +1,81 @@
+
+.rounded-box{
+    font-family: "Bebas Neue",sans-serif;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--foreground-color);
+    border-color: var(--border-color);
+    border-radius: 10px;
+    border-style: solid;
+    width: fit-content;
+    padding: 10px;
+    height: fit-content;
+    margin: 0;
+    margin-top: 70px;
+    text-align: center;
+    align-self: center;
+
+}
+
+.input-forms{
+    width: 350px; 
+    height: 48px; 
+    font-size: 16px;
+    border-radius: 10px;
+    border-style: solid;
+}
+
+.input-forms::placeholder{
+    color:rgba(245, 245, 245, 0.297);
+}
+
+
+input {
+	width: 100%;
+	padding-left: 10px; /* Adds space inside the input */
+	font-size: 16px;
+	background: var(--textbox-color);
+	color: whitesmoke;
+    font-family: "Poppins",sans-serif;
+    outline: none;
+}
+
+form {
+	display: flex;
+	flex-direction: column; /* or row if you want inline fields */
+	gap: 10px; /* Adds spacing between inputs */
+}
+
+
+.form-list{
+    align-self: center;
+}
+
+button{
+    border-radius: 12px;
+    height: 48px;
+    background-color: var(--accent-color);
+    font-family: "Poppins",sans-serif;
+    color: whitesmoke;
+    border-radius: 10px;
+    border-style: none;
+    transition: transform 0.2s ease-in-out;
+
+}
+
+button:hover{
+    transform: scale(1.01);
+}
+
+.error-message{
+    padding-top: 10px;
+    font-size: smaller;
+    color: #892B2B;
+}
+
+
+
+a{
+    text-align: right;
+    padding-top: 10px;
+}
