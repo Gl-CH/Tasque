@@ -35,8 +35,8 @@ function add_task(section_id, id, title, subtitle,order) {
     new_task_checkbox.addEventListener("change", () => remove_task(new_task_checkbox));
     new_task.addEventListener("dragstart", () => new_task.classList.add("dragging"));
     new_task.addEventListener("dragend", () => new_task.classList.remove("dragging"));
-	new_task_title.addEventListener("blur",() => updateTaskDetails(section_id,id,new_task_title.innerText,new_task_subtitle.innerHTML))
-	new_task_subtitle.addEventListener("blur",() => updateTaskDetails(section_id,id,new_task_title.innerText,new_task_subtitle.innerHTML))
+	new_task_title.addEventListener("blur",(event) => updateTaskDetails(section_id,id,event.target.dataset.order,new_task_title.innerText,new_task_subtitle.innerHTML,event.target))
+	new_task_subtitle.addEventListener("blur",(event) => updateTaskDetails(section_id,id,event.target.dataset.order,new_task_title.innerText,new_task_subtitle.innerHTML))
 
 
     section.insertBefore(new_task, addTaskButton);
@@ -107,12 +107,14 @@ function handleDrop(event, container) {
     event.preventDefault();
     const task = document.querySelector(".dragging");
     const after_element = get_drag_afterelement(container, event.clientY);
+    const before_element = get_drag_beforeelement(container,event.clientY)
     if (task) {
         const task_title = task.querySelector(".task-title").innerText
         const task_subtitle = task.querySelector(".task-subtitle").innerText
         const section_id = container.closest(".task-section-list").dataset.id 
+        const order = Math.round((after_element.dataset.order + before_element.dataset.order)/2)
         container.insertBefore(task, after_element || container.querySelector(".add-task-button"));
-        updateTaskDetails(section_id,task.dataset.id,task_title,task_subtitle)
+        updateTaskDetails(section_id,task.dataset.id,order,task_title,task_subtitle)
     }
     
 }
@@ -132,7 +134,7 @@ function updateSectionTitle(id, newTitle) {
 
 
 
-function updateTaskDetails(section_id,id,new_title,new_subtitle){
+function updateTaskDetails(section_id,id,order,new_title,new_subtitle){
 	const csrfToken = getCSRFToken();
 
 	fetch(`http://localhost:8000/lists/get/tasks/${id}/`, {
@@ -144,9 +146,11 @@ function updateTaskDetails(section_id,id,new_title,new_subtitle){
 		body: JSON.stringify({ 
 			title: new_title,
 			subtitle: new_subtitle,
-			section: section_id
+			section: section_id,
+            order: order
 			})
-	});
+	}); 
+    console.log(task_element)
 	}
 
 // Remove task from the list
@@ -182,6 +186,15 @@ function get_drag_afterelement(container, y) {
         const offset = y - box.top - box.height / 2;
         return offset < 0 && offset > closest.offset ? { offset, element: child } : closest;
     }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+function get_drag_beforeelement(container,y){
+    const draggable_elements = [...container.querySelectorAll(".task:not(.dragging)")];
+    return draggable_elements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        return offset > 0 && offset < closest.offset ? { offset, element: child } : closest;
+    }, { offset: Number.POSITIVE_INFINITY }).element;
 }
 
 // Initialize the page by fetching existing data

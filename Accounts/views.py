@@ -2,6 +2,8 @@ from django.shortcuts import render,redirect
 from django.http import HttpResponse
 from .forms import Signin_Form
 from .forms import Signup_Form
+from Task_app.models import List
+from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth import authenticate,login
 
@@ -17,7 +19,8 @@ def sign_in(request):
             user = authenticate(request,username=username,password=password)
             if user is not None:
                 login(request,user)
-                return redirect("lists")
+                key = List.objects.filter(user = user.id).first()
+                return redirect("lists", key = key.id)
             else:
                 form.add_error(None, "Invalid Login Details")
     return render(request,"sign_in/index.html",{'form':form})

@@ -5,13 +5,17 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
-from .models import Task, Section, List
+from .models import Task, Section, List,UserProfile
+from rest_framework.permissions import IsAuthenticated
 from .serializer import TaskSerializer, SectionSerializer, ListSerializer,ListNestedSerializer
 
 
 # --- Page View ---
 def task_app(request,key):
-    return render(request, "tasks/index.html",{"csrf_token":get_token(request),"list_name":List.objects.get(id = key).name,"list_key":key} )
+    list = List.objects.get(id = key,user = request.user.id)
+    request.user.userprofile.last_used_list = list
+    request.user.userprofile.save()
+    return render(request, "tasks/index.html",{"csrf_token":get_token(request),"list_name":list.name,"list_key":key} )
 
 
 def sign_out(request):
@@ -112,7 +116,7 @@ def create_list(request):
 
 @api_view(["GET"])
 def get_lists(request):
-    lists = List.objects.all()
+    lists = List.objects.filter(user = request.user.id)
     serializer = ListSerializer(lists, many=True)
     return Response(serializer.data)
 
@@ -120,7 +124,7 @@ def get_lists(request):
 @api_view(["GET", "PUT", "DELETE"])
 def list_details(request, key):
     try:
-        list_obj = List.objects.get(pk=key)
+        list_obj = List.objects.get(pk=key,user=request.user.id)
     except List.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -144,7 +148,7 @@ def list_details(request, key):
 def get_nested_list(request,key):
     try:
         # Fetch the List object, prefetch related sections and tasks
-        list_obj = List.objects.prefetch_related('sections__tasks').get(pk=key)
+        list_obj = List.objects.prefetch_related('sections__tasks').get(pk=key,user = request.user.id)
     except List.DoesNotExist:
         return Response({"detail": "List not found."}, status=status.HTTP_404_NOT_FOUND)
 

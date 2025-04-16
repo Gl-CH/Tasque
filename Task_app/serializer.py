@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import Task,Section,List
+from django.db.models import Max
+
 
 
 class ListSerializer(serializers.ModelSerializer):
@@ -11,6 +13,12 @@ class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = '__all__'
+
+    def create(self, validated_data):
+        section = validated_data.get('section')
+        last_order = Task.objects.filter(section=section).aggregate(Max('order'))['order__max'] or 0
+        validated_data['order'] = last_order + 10
+        return super().create(validated_data)
 
 class SectionSerializer(serializers.ModelSerializer):
     class Meta:
