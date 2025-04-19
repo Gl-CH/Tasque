@@ -6,7 +6,8 @@
 {% block script %} <script src="{% static 'tasks/js/script.js' %}"></script>{% endblock %}
 {% block meta %}
     <meta name="csrf-token" content="{{ csrf_token }}">
-    <meta name="list_id" content="{{list_key}}">
+    <meta name="list-id" content="{{list_key}}">
+    <meta name = "user-id" content = "{{request.user.id}}"
 {% endblock %}
 {% block header %}{{ list_name }}{% endblock %}
 
@@ -19,18 +20,21 @@
 
 
 {% block content %}
-    <div class="sidebar">
-        <div class = sidebar-button-container>
-            <button><i class="fa-solid fa-file-circle-plus fa-lg"></i></i></button>
-            <button><i class="fa-solid fa-folder-plus fa-lg"></i></button>
+    <div class="content">
+        <div class="sidebar">
+            <h1>Lists</h1>
+            <ul class="list-container"></ul>
+            <div class = sidebar-button-container>
+                <button class="add-list-button"><i class="fa-solid fa-file-circle-plus fa-lg"></i></i></button>
+            </div>
+        <div class = "sidebar-resizer"> </div>
+        </div>
+    
+        <div class = "display-area">
+            <ul id = sections-container>
+                <button class="add-section-button">Add Section</button>
+            </ul>
         </div>
     </div>
 
-
-    <div class = "display-area">
-        <ul id = sections-container>
-            <button class="add-section-button">Add Section</button>
-        </ul>
-
-    </div>
 {% endblock %}

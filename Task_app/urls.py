@@ -24,4 +24,7 @@ urlpatterns = [
     path("create/tasks/", views.create_task, name="create_task"),
     path("get/tasks/", views.get_tasks, name="get_tasks"),
     path("get/tasks/<int:key>/", views.task_details, name="task_details"),
+    path("get/tasks/bulk", views.bulk_update_tasks, name="bulk_update"),
+    
+    
 ]

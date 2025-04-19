@@ -1,11 +1,6 @@
-// Helper function to get CSRF token from meta tag
-function getCSRFToken() {
-    return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-}
+// Global variables
+let csrfToken, listId, userId;
 
-function getListId(){
-    return document.querySelector('meta[name="list_id"]').content;
-}
 // Helper function to create a new element with classes and attributes
 function createElement(tag, classes = [], attributes = {}) {
     const element = document.createElement(tag);
@@ -15,216 +10,376 @@ function createElement(tag, classes = [], attributes = {}) {
 }
 
 // Add a new task to a section
-function add_task(section_id, id, title, subtitle,order) {
-    const new_task = createElement("li", ["task"], { "draggable": true, "data-id": id ,"data-order": order});
-    const new_task_boundry = createElement("div", ["task-boundry"]);
-    const new_task_title = createElement("h1", ["task-title"], { "contenteditable": true });
-    const new_task_subtitle = createElement("h6", ["task-subtitle"], { "contenteditable": true });
-    const new_task_checkbox = createElement("input", ["checkbox"], { "type": "checkbox", "id": "dynamicCheckbox" });
-	const section_wrapper = document.querySelector(`.task-section-list[data-id="${section_id}"]`);
-	const section = section_wrapper.querySelector(".task-section");
-	const addTaskButton = section.querySelector(".add-task-button");
+function addTask(sectionId, id, title, subtitle) {
+    const newTask = createElement("li", ["task"], { draggable: true, "data-id": id });
+    const taskBoundary = createElement("div", ["task-boundry"]);
+    const taskTitle = createElement("h1", ["task-title"], { contenteditable: true });
+    const taskSubtitle = createElement("h6", ["task-subtitle"], { contenteditable: true });
+    const checkbox = createElement("input", ["checkbox"], { type: "checkbox"});
+    const sectionWrapper = document.querySelector(`.task-section-list[data-id="${sectionId}"]`);
+    const section = sectionWrapper.querySelector(".task-section");
+    const addTaskButton = section.querySelector(".add-task-button");
 
-    new_task_title.innerHTML = title;
-    new_task_subtitle.innerHTML = subtitle;
+    taskTitle.innerHTML = title;
+    taskSubtitle.innerHTML = subtitle;
 
-    new_task_boundry.append(new_task_title, new_task_subtitle, new_task_checkbox);
-    new_task.appendChild(new_task_boundry);
+    taskBoundary.append(taskTitle, taskSubtitle, checkbox);
+    newTask.appendChild(taskBoundary);
 
-    // Event Listeners
-    new_task_checkbox.addEventListener("change", () => remove_task(new_task_checkbox));
-    new_task.addEventListener("dragstart", () => new_task.classList.add("dragging"));
-    new_task.addEventListener("dragend", () => new_task.classList.remove("dragging"));
-	new_task_title.addEventListener("blur",(event) => updateTaskDetails(section_id,id,event.target.dataset.order,new_task_title.innerText,new_task_subtitle.innerHTML,event.target))
-	new_task_subtitle.addEventListener("blur",(event) => updateTaskDetails(section_id,id,event.target.dataset.order,new_task_title.innerText,new_task_subtitle.innerHTML))
+    checkbox.addEventListener("change", () => removeTask(checkbox));
+    newTask.addEventListener("dragstart", () => newTask.classList.add("dragging"));
+    newTask.addEventListener("dragend", () => newTask.classList.remove("dragging"));
 
+    taskTitle.addEventListener("blur", (event) => updateTaskDetails(id, { title: event.target.innerHTML }));
+    taskSubtitle.addEventListener("blur", (event) => updateTaskDetails(id, { subtitle: event.target.innerHTML }));
 
-    section.insertBefore(new_task, addTaskButton);
+    section.insertBefore(newTask, addTaskButton);
 }
 
-// Add a new section to the page
-function add_section(title, id) {
-    const sections_container = document.querySelector("#sections-container");
-    const section_list = createElement("li", ["task-section-list"], { "draggable": true, "data-id": id });
-    const section_sub_list = createElement("ul", ["task-section"]);
-    const section_title = createElement("h1", ["task-section-title"], { "contenteditable": true });
-    const section_add_task_button = createElement("button", ["add-task-button"]);
-    const section_delete_button = createElement("input", ["section-checkbox"], { "type": "checkbox" });
-    const section_title_div = createElement("div", ["task_section-title-container"]);
-	
+function addSection(title, id) {
+    const sectionsContainer = document.querySelector("#sections-container");
+    const sectionList = createElement("li", ["task-section-list"], { draggable: true, "data-id": id });
+    const sectionSubList = createElement("ul", ["task-section"]);
+    const sectionTitle = createElement("h1", ["task-section-title"], { contenteditable: true });
+    const addTaskButton = createElement("button", ["add-task-button"]);
+    const deleteCheckbox = createElement("input", ["checkbox","section-checkbox"], { type: "checkbox" });
+    const titleContainer = createElement("div", ["task_section-title-container"]);
+    const addSectionButton = document.querySelector(".add-section-button");
 
-    section_title.innerHTML = title;
-    section_add_task_button.innerHTML = "Add Task";
+    sectionTitle.innerHTML = title;
+    addTaskButton.innerHTML = "Add Task";
 
-    section_title_div.append(section_title, section_delete_button);
-    section_sub_list.append(section_title_div, section_add_task_button);
-    section_list.appendChild(section_sub_list);
+    titleContainer.append(sectionTitle, deleteCheckbox);
+    sectionSubList.append(titleContainer, addTaskButton);
+    sectionList.appendChild(sectionSubList);
 
-    // Event Listeners
-    section_add_task_button.addEventListener("click", () => createNewTask(id));
-    section_delete_button.addEventListener("change", () => remove_section(section_delete_button));
-    section_sub_list.addEventListener("dragover", (event) => handleDragOver(event, section_sub_list));
-    section_sub_list.addEventListener("drop", (event) => handleDrop(event, section_sub_list));
+    addTaskButton.addEventListener("click", () => createNewTask(id));
+    deleteCheckbox.addEventListener("change", () => removeSection(deleteCheckbox));
+    sectionSubList.addEventListener("dragover", (event) => handleDragOver(event, sectionSubList));
+    sectionSubList.addEventListener("drop", (event) => handleDrop(event, sectionSubList));
+    sectionTitle.addEventListener("blur", (event) => updateSectionDetails(id, { title: event.target.innerText }));
 
-    section_title.addEventListener("blur", () => updateSectionTitle(id,section_title.innerText));
-
-    sections_container.insertBefore(section_list, document.querySelector(".add-section-button"));
+    sectionsContainer.insertBefore(sectionList, addSectionButton);
 }
 
-// Create a new task via API and add it to the section
+function addList(id,name) {
+    const listContainer = document.querySelector(".list-container");
+    const div = createElement("div", ["list-item-container"]);
+    const listItem = createElement("li", ["list-item"]);
+    const linkItem = createElement("text", ["link-item"], { "data-id": id });
+    const icon = createElement("i", ["fa-solid", "fa-x"]);
+    const deleteButton = createElement("button", ["list-delete-button"]);
+
+    linkItem.innerText = name;
+    linkItem.setAttribute("contenteditable", true);
+    deleteButton.appendChild(icon);
+    div.appendChild(linkItem);
+    div.appendChild(deleteButton);
+
+    deleteButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        removeList(event.target);
+    });
+
+    div.addEventListener("click", () => {
+        window.location.href = `/lists/${id}`;
+    });
+
+    linkItem.addEventListener("click", (event) => {
+        event.stopPropagation();
+    });
+
+    linkItem.addEventListener("blur", (event) => {
+        updateListDetails(event.target.dataset.id, { name: linkItem.innerText });
+    });
+
+    listItem.appendChild(div);
+    listContainer.appendChild(listItem);
+}
+
+
 function createNewTask(sectionId) {
-    const csrfToken = getCSRFToken();
-    fetch("http://localhost:8000/lists/create/tasks/", {
+    fetch("/lists/create/tasks/", {
         method: "POST",
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': csrfToken,
         },
-        body: JSON.stringify({
-            title: "New Task",
-            subtitle: "New Subtitle",
-            section: sectionId,
-            order: 0
-        })
+        body: JSON.stringify({ title: "New Task", subtitle: "New Subtitle", section: sectionId, order: 0 })
     })
     .then(response => response.json())
-    .then(data => {
-		add_task(sectionId, data.id, data.title, data.subtitle)});
+    .then(data => addTask(sectionId, data.id, data.title, data.subtitle));
 }
 
-// Handle drag over for task reordering
 function handleDragOver(event, container) {
     event.preventDefault();
     const task = document.querySelector(".dragging");
-    const after_element = get_drag_afterelement(container, event.clientY);
+    const afterElement = getDragAfterElement(container, event.clientY);
     if (task) {
-        container.insertBefore(task, after_element || container.querySelector(".add-task-button"));
+        container.insertBefore(task, afterElement || container.querySelector(".add-task-button"));
     }
 }
 
-// Handle drop event for task reordering
+let dropTimeout = null;
 function handleDrop(event, container) {
     event.preventDefault();
     const task = document.querySelector(".dragging");
-    const after_element = get_drag_afterelement(container, event.clientY);
-    const before_element = get_drag_beforeelement(container,event.clientY)
+    const afterElement = getDragAfterElement(container, event.clientY);
     if (task) {
-        const task_title = task.querySelector(".task-title").innerText
-        const task_subtitle = task.querySelector(".task-subtitle").innerText
-        const section_id = container.closest(".task-section-list").dataset.id 
-        const order = Math.round((after_element.dataset.order + before_element.dataset.order)/2)
-        container.insertBefore(task, after_element || container.querySelector(".add-task-button"));
-        updateTaskDetails(section_id,task.dataset.id,order,task_title,task_subtitle)
+        const sectionId = container.closest(".task-section-list").dataset.id;
+        container.insertBefore(task, afterElement || container.querySelector(".add-task-button"));
+        if (dropTimeout) clearTimeout(dropTimeout);
+        dropTimeout = setTimeout(() => {
+            updateTaskDetails(task.dataset.id, { section: sectionId });
+            updateOrder(sectionId);
+        }, 3000);
     }
-    
 }
 
-// Update section title on blur
-function updateSectionTitle(id, newTitle) {
-    const csrfToken = getCSRFToken();
-    fetch(`http://localhost:8000/lists/get/sections/${id}/`, {
-        method: "PUT",
+function updateOrder(sectionId) {
+    const section = document.querySelector(`.task-section-list[data-id="${sectionId}"] > .task-section`);
+    const children = Array.from(section.querySelectorAll(".task"));
+    const updates = children.map((child, i) => ({ id: child.dataset.id, order: i * 10 }));
+
+    fetch("/lists/get/tasks/bulk", {
+        method: "PATCH",
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': csrfToken,
         },
-        body: JSON.stringify({ title: newTitle, list: getListId() })
+        body: JSON.stringify(updates)
+    });
+    console.log(JSON.stringify(updates));
+}
+
+function updateSectionDetails(id, details) {
+    fetch(`/lists/get/sections/${id}/`, {
+        method: "PATCH",
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+        },
+        body: JSON.stringify(details)
     });
 }
 
-
-
-function updateTaskDetails(section_id,id,order,new_title,new_subtitle){
-	const csrfToken = getCSRFToken();
-
-	fetch(`http://localhost:8000/lists/get/tasks/${id}/`, {
-		method: "PUT",
-		headers: {
-			'Content-Type': 'application/json',
-			'X-CSRFToken': csrfToken,
-		},
-		body: JSON.stringify({ 
-			title: new_title,
-			subtitle: new_subtitle,
-			section: section_id,
-            order: order
-			})
-	}); 
-    console.log(task_element)
-	}
-
-// Remove task from the list
-function remove_task(button) {
-	const csrfToken = getCSRFToken();
-	const task = button.closest(".task");
-    setTimeout(() => {
-		task.remove();
-		fetch(`http://localhost:8000/lists/get/tasks/${task.dataset.id}/`,{
-            method: "DELETE",
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken}
-        })},450);
+function updateTaskDetails(id, details) {
+    fetch(`/lists/get/tasks/${id}/`, {
+        method: "PATCH",
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+        },
+        body: JSON.stringify(details)
+    });
 }
 
-// Remove section and delete it via API
-function remove_section(button) {
-    const csrfToken = getCSRFToken();
-    const task_section = button.closest(".task-section-list");
+function removeTask(checkbox) {
+    const task = checkbox.closest(".task");
+    task.classList.add("shrink")
     setTimeout(() => {
-        task_section.remove();
-        fetch(`http://localhost:8000/lists/get/sections/${task_section.dataset.id}/`, {
+        task.remove();
+        fetch(`/lists/get/tasks/${task.dataset.id}/`, {
             method: "DELETE",
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            }
         });
-    },450);
+    }, 450);
 }
 
-// Drag and drop utility function
-function get_drag_afterelement(container, y) {
-    const draggable_elements = [...container.querySelectorAll(".task:not(.dragging)")];
-    return draggable_elements.reduce((closest, child) => {
+function removeSection(checkbox) {
+    const section = checkbox.closest(".task-section-list");
+    section.classList.add("shrink")
+    setTimeout(() => {
+        section.remove();
+        fetch(`/lists/get/sections/${section.dataset.id}/`, {
+            method: "DELETE",
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            }
+        });
+    }, 450);
+}
+
+function removeList(button) {
+    const list = button.closest(".list-item");
+    const link = list.querySelector(".link-item");
+    list.classList.add("shrink")
+    setTimeout(() => {
+        fetch(`/lists/get/lists/${link.dataset.id}/`, {
+            method: "DELETE",
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            }
+        });
+        list.remove();
+    }, 450);
+}
+
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll(".task:not(.dragging)")];
+    return draggableElements.reduce((closest, child) => {
         const box = child.getBoundingClientRect();
         const offset = y - box.top - box.height / 2;
         return offset < 0 && offset > closest.offset ? { offset, element: child } : closest;
     }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
-function get_drag_beforeelement(container,y){
-    const draggable_elements = [...container.querySelectorAll(".task:not(.dragging)")];
-    return draggable_elements.reduce((closest, child) => {
-        const box = child.getBoundingClientRect();
-        const offset = y - box.top - box.height / 2;
-        return offset > 0 && offset < closest.offset ? { offset, element: child } : closest;
-    }, { offset: Number.POSITIVE_INFINITY }).element;
+function initializeSidebar() {
+
+    fetch("/lists/get/lists/")
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(list => {
+                addList(list.id,list.name);
+            });
+        });
+
+    }
+
+function initializeSidebarResizer() {
+    const sidebar = document.querySelector(".sidebar");
+    const resizer = document.querySelector(".sidebar-resizer");
+    const display = document.querySelector(".display-area");
+
+    let isResizing = false;
+
+    function startResize(e) {
+        isResizing = true;
+        document.body.style.cursor = 'ew-resize';
+        e.preventDefault();
+    }
+
+    function stopResize() {
+        isResizing = false;
+        document.body.style.cursor = '';
+    }
+
+    function resizeSidebar(e) {
+        if (!isResizing) return;
+
+        const isMobile = window.innerWidth <= 768;
+        let clientX = e.clientX;
+        if (e.type.startsWith("touch")) {
+            clientX = e.touches[0].clientX;
+        }
+
+        if (isMobile) {
+            sidebar.style.width = "70vw";
+        } else {
+            const minWidth = 150;
+            const maxWidth = 400;
+            let newWidth = Math.min(Math.max(clientX, minWidth), maxWidth);
+            sidebar.style.width = `${newWidth}px`;
+            display.style.marginLeft = `${newWidth}px`;
+        }
+    }
+
+    // Mouse events
+    resizer.addEventListener("mousedown", startResize);
+    document.addEventListener("mousemove", resizeSidebar);
+    document.addEventListener("mouseup", stopResize);
+
+    // Touch events
+    resizer.addEventListener("touchstart", startResize, { passive: false });
+    document.addEventListener("touchmove", resizeSidebar, { passive: false });
+    document.addEventListener("touchend", stopResize);
+
+    // Swipe detection to show sidebar on mobile
+    let touchStartX = 0;
+    document.addEventListener("touchstart", (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    });
+
+    document.addEventListener("touchend", (e) => {
+        const touchEndX = e.changedTouches[0].clientX;
+        const touchEndY = e.changedTouches[0].clientY;
+        const swipeDistanceX = touchEndX - touchStartX; // Horizontal distance moved
+        const swipeDistanceY = touchEndY - touchStartY; // Vertical distance moved
+    
+        // Only show the sidebar if the horizontal swipe is significant and vertical movement is small
+        if (Math.abs(swipeDistanceX) > Math.abs(swipeDistanceY) && swipeDistanceX > 50 && touchStartX < touchEndX) {
+            sidebar.classList.add("shown")}
+    });
+
+    // Tap outside to close on mobile
+    document.addEventListener("click", (e) => {
+        if (window.innerWidth <= 768 &&
+            !sidebar.contains(e.target) &&
+            !resizer.contains(e.target)
+        ) {
+            sidebar.classList.remove("shown");
+        }
+    });
 }
 
-// Initialize the page by fetching existing data
-function initialize_page(list_id) {
-    fetch(`http://localhost:8000/lists/get/all/${list_id}`)
+function createList() {
+    fetch("/lists/create/list/", {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+        },
+        body: JSON.stringify({ name: "New_List", user: userId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        addList(data.id,data.name)
+    })
+    .then();
+}
+
+function updateListDetails(id, details) {
+    fetch(`/lists/get/lists/${id}/`, {
+        method: "PATCH",
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+        },
+        body: JSON.stringify(details)
+    });
+}
+
+function initializePage(currentListId) {
+    fetch(`/lists/get/all/${currentListId}`)
         .then(response => response.json())
         .then(data => {
             data.sections.forEach(section => {
-                add_section(section.title, section.id);
-                section.tasks.forEach(task => add_task(section.id, task.id, task.title, task.subtitle,task.order));
+                addSection(section.title, section.id);
+                section.tasks.forEach(task => {
+                    addTask(section.id, task.id, task.title, task.subtitle);
+                });
             });
         });
 }
 
-// Initialize event listeners on document ready
 document.addEventListener("DOMContentLoaded", () => {
+    csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    listId = document.querySelector('meta[name="list-id"]')?.content;
+    userId = document.querySelector('meta[name="user-id"]')?.content;
     const add_section_button = document.querySelector(".add-section-button");
-    initialize_page(getListId());
+
+    initializePage(listId);
+    initializeSidebar();
+    initializeSidebarResizer();
+
+    document.querySelector(".add-list-button").addEventListener("click", createList);
 
     add_section_button.addEventListener("click", () => {
-        const csrfToken = getCSRFToken();
-        fetch("http://localhost:8000/lists/create/section/", {
+        fetch("/lists/create/section/", {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': csrfToken,
             },
-            body: JSON.stringify({ title: 'New Section', list: getListId()})
+            body: JSON.stringify({ title: 'New Section', list: listId})
         })
         .then(response => response.json())
-        .then(data => add_section(data.title, data.id));
-    });
+        .then(data => addSection(data.title, data.id));
+});
 });

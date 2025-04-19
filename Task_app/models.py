@@ -25,16 +25,13 @@ class Task(models.Model):
 	title = models.CharField(max_length=64)
 	subtitle = models.TextField(max_length=128)
 	section = models.ForeignKey(Section, on_delete=models.CASCADE,related_name="tasks")
-	order = models.PositiveIntegerField()
+	order = models.PositiveIntegerField(default=0)
 
 	class Meta:
-		constraints = [
-			models.UniqueConstraint(fields= ['section','order'],name='order_per_section')
-		]
-		ordering = ['order']
+		ordering = ["order"]
 
 	def __str__(self):
-		return f"task {self.id} under section {self.section}"
+		return f"task {self.id} under section {self.section} with an order {self.order}"
 	
 
 class UserProfile(models.Model):

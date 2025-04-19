@@ -7,7 +7,7 @@ from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
 from .models import Task, Section, List,UserProfile
 from rest_framework.permissions import IsAuthenticated
-from .serializer import TaskSerializer, SectionSerializer, ListSerializer,ListNestedSerializer
+from .serializer import TaskSerializer, SectionSerializer, ListSerializer,ListNestedSerializer,SectionNestedSerializer
 
 
 # --- Page View ---
@@ -40,7 +40,7 @@ def get_tasks(request):
     return Response(serializer.data)
 
 
-@api_view(["GET", "PUT", "DELETE"])
+@api_view(["GET", "PUT", "DELETE","PATCH"])
 def task_details(request, key):
     try:
         task = Task.objects.get(pk=key)
@@ -51,8 +51,8 @@ def task_details(request, key):
         serializer = TaskSerializer(task)
         return Response(serializer.data)
 
-    elif request.method == "PUT":
-        serializer = TaskSerializer(task, data=request.data)
+    elif request.method == "PUT" or request.method == "PATCH":
+        serializer = TaskSerializer(task, data=request.data, partial = True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -81,7 +81,7 @@ def get_sections(request):
     return Response(serializer.data)
 
 
-@api_view(["GET", "PUT", "DELETE"])
+@api_view(["GET", "PUT", "DELETE","PATCH"])
 def section_details(request, key):
     try:
         section = Section.objects.get(pk=key)
@@ -92,8 +92,8 @@ def section_details(request, key):
         serializer = SectionSerializer(section)
         return Response(serializer.data)
 
-    elif request.method == "PUT":
-        serializer = SectionSerializer(section, data=request.data)
+    elif request.method == "PUT" or request.method == "PATCH":
+        serializer = SectionSerializer(section, data=request.data, partial = True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -121,7 +121,7 @@ def get_lists(request):
     return Response(serializer.data)
 
 
-@api_view(["GET", "PUT", "DELETE"])
+@api_view(["GET", "PUT", "DELETE","PATCH"])
 def list_details(request, key):
     try:
         list_obj = List.objects.get(pk=key,user=request.user.id)
@@ -132,8 +132,8 @@ def list_details(request, key):
         serializer = ListSerializer(list_obj)
         return Response(serializer.data)
 
-    elif request.method == "PUT":
-        serializer = ListSerializer(list_obj, data=request.data)
+    elif request.method == "PUT" or request.method == "PATCH":
+        serializer = ListSerializer(list_obj, data=request.data ,partial = True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -157,3 +157,52 @@ def get_nested_list(request,key):
 
     # Return the serialized data in the response
     return Response(serializer.data)   
+
+@api_view(["GET"])
+def get_nested_sections(request,key):
+    try:
+        # Fetch the List object, prefetch related sections and tasks
+        section_obj = Section.objects.prefetch_related('tasks').get(pk=key,user = request.user.id)
+    except Section.DoesNotExist:
+        return Response({"detail": "List not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Serialize the data using the nested serializer
+    serializer = SectionNestedSerializer(section_obj)
+
+    # Return the serialized data in the response
+    return Response(serializer.data)   
+
+from django.db import transaction
+
+@api_view(["PATCH"])
+def bulk_update_tasks(request):
+    task_updates = request.data  # expecting a list like [{id: 3, order: 1}, {id: 4, order: 2}]
+
+    if not isinstance(task_updates, list):
+        return Response({"detail": "Expected a list of task updates."}, status=status.HTTP_400_BAD_REQUEST)
+
+    errors = []
+    
+    with transaction.atomic():
+        for update in task_updates:
+            task_id = update.get("id")
+            if not task_id:
+                errors.append({"detail": "Missing 'id' in one of the updates."})
+                continue
+
+            try:
+                task = Task.objects.get(pk=task_id)
+            except Task.DoesNotExist:
+                errors.append({"detail": f"Task with id {task_id} not found."})
+                continue
+
+            serializer = TaskSerializer(task, data=update, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                errors.append({f"id_{task_id}": serializer.errors})
+
+    if errors:
+        return Response({"detail": "Some updates failed.", "errors": errors}, status=status.HTTP_207_MULTI_STATUS)
+
+    return Response({"detail": "Tasks updated successfully."}, status=status.HTTP_200_OK)
